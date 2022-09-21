@@ -1,0 +1,764 @@
+
+
+var tilemap = [
+  "                                        ",
+  "                                        ",
+  "      p                                 ",
+  "                  p         r           ",
+  "         rr                r r         ",
+  "           r                rr    p     ",
+  "                             r          ",
+  "                              r         ",
+  "                      p     e           ",
+  "         c                              ",
+  "                   r   r                ",
+  "                    rrrr         p      ",
+  "                     rr                 ",
+  "             p                          ",
+  "rr     r                                ",
+  "    e   r              p                ",
+  "                                        ",
+  "        p                        p      ",
+  "                                        ",
+  "           r                            ",
+  "          r                r            ",
+  "        rr           p     r            ",
+  "                           e     p      ",
+  "                                  r     ",
+  "     e     p                     rr     ",
+  "                       p        rr      ",
+  "                                r       ",
+  "                               rr       ",
+  "      p       r                r        ",
+  "             rr       p                 ",
+  "           rrr                   p      ",
+  "                                        ",
+  "        p          e                    ",
+  "                           r            ",
+  "                         rr             ",
+  "                   p                    ",
+  "            rrr                         ",
+  "     p         r          e             ",
+  "                                  p     ",
+  "                                        ",
+]
+
+var phase = 0; //0 = start screen 1 = running; 2 = gameover; 3 = win
+
+var player;
+
+var offsetX = 0;
+var offsetY = 0;
+
+var rocks = [];
+var enemies = [];
+var prizes = [];
+var stars = [];
+var missles = [];
+
+let prizeIcon;
+let playerImg;
+let enemieImg;
+let backgroundImg;
+let rockImg;
+let wallImg;
+
+let font;
+
+function preload() {
+  playerImg = loadImage('player.png');
+  enemieImg = loadImage('enemie.png');
+  backgroundImg = loadImage('background.png');
+  rockImg = loadImage('rock.png');
+  wallImg = loadImage('wall.png');
+  font = loadFont('pixelfont.ttf');
+}
+
+function setup() {
+  createCanvas(400, 400);
+  textAlign(CENTER);
+  textFont(font);
+  
+  playerImg.resize(20,20);
+  enemieImg.resize(20,20);
+  rockImg.resize(20,20)
+}
+
+function draw() {
+  background(19, 19, 23);
+  
+  if(phase == 0) {
+  image(backgroundImg,0,0)
+  textSize(32);
+  
+  drawingContext.shadowBlur = 0;
+  strokeWeight(1.5);
+  noFill();
+  stroke(199, 226, 255, 155);
+  text('Project 3', width/2,height/2)
+  
+  stroke(140, 214, 255, flickering());
+  drawingContext.shadowBlur = 105;
+  drawingContext.shadowColor = color(25, 173, 255, flickering());
+  text('Project 3', width/2,height/2)
+  drawingContext.shadowBlur = 300;
+  text('Project 3', width/2,height/2)
+  
+  stroke(130, 159, 189);
+  drawingContext.shadowBlur = 0;
+  drawingContext.shadowColor = color(25, 173, 255,100);
+  textSize(14)
+  text('press SPACE to start', width/2, height*3/4)  
+    
+  }
+  else if(phase==1) updateRunningGame();
+  else if(phase==2) { // gameover
+    image(backgroundImg,0,0)
+  textSize(32);
+  
+  drawingContext.shadowBlur = 0;
+  strokeWeight(1.5);
+  noFill();
+  stroke(199, 226, 255, 155);
+  text('GAME OVER', width/2,height/2)
+  
+  stroke(242, 160, 160, flickering());
+  drawingContext.shadowBlur = 105;
+  drawingContext.shadowColor = color(252, 104, 104, flickering());
+  text('GAME OVER', width/2,height/2)
+  drawingContext.shadowBlur = 300;
+  text('GAME OVER', width/2,height/2)
+  
+  stroke(189, 130, 130);
+  drawingContext.shadowBlur = 0;
+  drawingContext.shadowColor = color(252, 104, 104,100);
+  textSize(14)
+  text('press SPACE to start', width/2, height*3/4) 
+  } 
+  else{ // win
+    image(backgroundImg,0,0)
+    textSize(32);
+
+    drawingContext.shadowBlur = 0;
+    strokeWeight(1.5);
+    noFill();
+    stroke(199, 226, 255, 155);
+    text('YOU WIN', width/2,height/2)
+
+    stroke(160, 242, 216, flickering());
+    drawingContext.shadowBlur = 105;
+    drawingContext.shadowColor = color(49, 222, 167, flickering());
+    text('YOU WIN', width/2,height/2)
+    drawingContext.shadowBlur = 300;
+    text('YOU WIN', width/2,height/2)
+
+    stroke(108, 204, 174);
+    drawingContext.shadowBlur = 0;
+    drawingContext.shadowColor = color(49, 222, 167,100);
+    textSize(14)
+    text('press SPACE to start', width/2, height*3/4) 
+  } 
+  
+}
+
+// draw running game
+function updateRunningGame() {
+  push();
+    translate(-offsetX, -offsetY);
+    
+    image(backgroundImg, 0,0);
+    image(wallImg,-20,-20)
+    showFence();
+    
+    player.update();
+    for(let i = 0; i < rocks.length; i++) rocks[i].update();
+    // delete all old rocks
+    for(let i = rocks.length-1; i >= 0; i--) {
+      if(rocks[i].pos.y < -100) rocks.splice(i,1);
+    }
+    
+    for(let i = 0; i < prizes.length; i++) prizes[i].show();
+    for(let i = 0; i < stars.length; i++) stars[i].update();
+    // delete all old stars
+    for(let i = stars.length-1; i >= 0; i--) {
+      if(stars[i].pos.y > 900) stars.splice(i,1);
+    }
+    for(let i = 0; i < missles.length; i++) missles[i].update();
+     // delete all old missles
+    for(let i = missles.length-1; i >= 0; i--) {
+      if(missles[i].pos.y < -100) missles.splice(i,1);
+    }
+
+    for(let i = 0; i < enemies.length; i++) enemies[i].update();
+     // delete all old enemies
+    for(let i = enemies.length-1; i >= 0; i--) {
+      if(enemies[i].lives == 0) enemies.splice(i,1);
+    }
+    pop();
+    
+    fill(255)
+    noStroke()
+    drawingContext.shadowBlur = 0
+    text(prizes.length, width - 24, 22)
+    
+}
+
+
+// draw fence
+function showFence() {
+  drawingContext.shadowBlur = 0;
+  strokeWeight(1.5);
+  noFill();
+  
+  stroke(126, 127, 128, 155);
+  rect(-14,-13,12,12);
+  rect(811,-13,12,12);
+  rect(811,811,12,12);
+  rect(-14,811,12,12);
+  line(7,-8,803,-8);
+  line(7,816,803,816);
+  line(-8,7,-8,803);
+  line(817,7,817,803);
+  
+  
+  stroke(140, 214, 255, flickering());
+  drawingContext.shadowBlur = 12;
+  drawingContext.shadowColor = color(25, 173, 255, flickering());
+  rect(-14,-13,12,12);
+  rect(811,-13,12,12);
+  rect(811,811,12,12);
+  rect(-14,811,12,12);
+  line(7,-8,803,-8);
+  line(7,816,803,816);
+  line(-8,7,-8,803);
+  line(817,7,817,803);
+  
+}
+// creates flickering effect for electric fence
+function flickering() {
+  var flickering = noise(frameCount/20);
+  if(flickering <= 0.3) flickering = 0;
+  flickering *= 155;
+  flickering += 100;
+  //flickering = 0;
+  return flickering;
+}
+
+// collision with all Rocks
+function collisionRocks(rPos, speed) {
+  for(let i = 0; i < rocks.length; i++) {
+    var bounce = rocks[i].collision(rPos, speed);
+    if(bounce != null) return bounce;
+  }
+  return null;
+}
+
+// collision player - prize
+function collisionPrizes(rPos){
+  for(let i = 0; i < prizes.length; i++) prizes[i].collision(rPos);
+  
+  // delete all collected prizes
+  for(let i = prizes.length-1; i >= 0; i--) {
+    if(prizes[i].pos.y <= 0) prizes.splice(i,1);
+  }
+  
+  if(prizes.length <= 0) phase = 3;
+}
+function keyPressed() {
+  if(phase == 1){
+  if(keyCode == LEFT_ARROW || key == 'a') player.leftKey = true;
+  if(keyCode == UP_ARROW || key == 'w') player.upKey = true;
+  if(keyCode == RIGHT_ARROW || key == 'd') player.rightKey = true;
+  if(keyCode == DOWN_ARROW || key == 's') player.downKey = true;
+  if(key == ' ') player.shoot();
+  }else{
+    if(key == ' ') start();
+  }
+  
+}
+function keyReleased() {
+  if(phase == 1){
+  if(keyCode == LEFT_ARROW|| key == 'a') player.leftKey = false;
+  if(keyCode == UP_ARROW || key == 'w') player.upKey = false;
+  if(keyCode == RIGHT_ARROW || key == 'd') player.rightKey = false;
+  if(keyCode == DOWN_ARROW || key == 's') player.downKey = false;
+  }
+}
+
+// Initializes all objects
+function start() {
+  phase = 1; 
+  
+  rocks = [];
+  enemies = [];
+  prizes = [];
+  missles = [];
+  
+  for (var i = 0; i< tilemap.length; i++) {
+        for (var j =0; j < tilemap[i].length; j++) {
+            switch (tilemap[i][j]) {
+                case 'c': player = new PLAYER(j*20, i*20);
+                    break;
+                case 'r': rocks.push(new ROCK(j*20, i*20));
+                    break;
+                case 'e': enemies.push(new ENEMIE(j*20, i*20));
+                    break;
+                case 'p': prizes.push(new PRIZE(j*20, i*20));
+                    break;
+            }
+        }
+  }
+}
+
+// collision LINE/RECTANGLE
+function lineRect( x1,  y1,  x2,  y2,  rx,  ry,  rw,  rh) {
+
+  // check if the line has hit any of the rectangle's sides
+  // uses the Line/Line function below
+  let left =   lineLine(x1,y1,x2,y2, rx,ry,rx, ry+rh);
+  let right =  lineLine(x1,y1,x2,y2, rx+rw,ry, rx+rw,ry+rh);
+  let top =    lineLine(x1,y1,x2,y2, rx,ry, rx+rw,ry);
+  let bottom = lineLine(x1,y1,x2,y2, rx,ry+rh, rx+rw,ry+rh);
+
+  // if ANY of the above are true, the line
+  // has hit the rectangle
+  if (left || right || top || bottom) {
+    return true;
+  }
+  return false;
+}
+// collision LINE/LINE
+function lineLine(x1,  y1,  x2,  y2,  x3,  y3,  x4,  y4) {
+
+  // calculate the direction of the lines
+  let uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+  let uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+
+  // if uA and uB are between 0-1, lines are colliding
+  if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+
+    // optionally, draw a circle where the lines meet
+    /*let intersectionX = x1 + (uA * (x2-x1));
+    let intersectionY = y1 + (uA * (y2-y1));
+    fill(255,0,0);
+    noStroke();
+    ellipse(intersectionX, intersectionY, 20, 20);*/
+
+    return true;
+  }
+  return false;
+}
+
+
+class ENEMIE {
+  constructor(posX, posY) {
+    this.pos = createVector(posX, posY);
+    this.wanderingSpeed = 1;
+    this.wandering = true; // othe20ise the enemy is chasing
+    this.rotation = random(0,TWO_PI);
+    this.cooldownDirChange = int(random(50,200));
+    
+    this.visionRange = 100;
+    this.visionCooldown = 0;
+    
+    this.chasingSpeed = 1.7;
+    
+    this.bounce = null;
+    this.bounceCooldown = 0;
+    
+    this.missleWarningCooldown = 0;
+    this.missleDir = createVector(0,0);
+    
+    this.lives = 2;
+    
+    this.offset = 0;
+  }
+  // updates the enemie every frame
+  update(){
+    this.move();
+    this.checkRocks() 
+    this.checkBorders();
+    this.playerSighted();
+    this.collisionPlayer();
+    this.collisionMissles();
+    this.collisionMisslePath();
+    
+    this.show();
+  }
+  // draws the enemie
+  show(){
+    
+    strokeWeight(1);
+    stroke(212, 181, 176,40);
+    fill(191, 80, 61,5);
+    circle(this.pos.x+10,this.pos.y+10,this.visionRange*2);
+    
+    
+    drawingContext.shadowBlur = 35;
+    drawingContext.shadowColor = color(255, 235, 148,120);
+    if(this.wandering==false) {
+      this.offset+=0.1;
+      drawingContext.shadowBlur = 45;
+    drawingContext.shadowColor = color(194, 73, 52, sin(this.offset)*120+125);
+    }
+    push();
+    translate(this.pos.x + 10, this.pos.y + 10);
+    rotate(this.rotation);
+    translate(-this.pos.x - 10, -this.pos.y - 10);
+    if(this.lives == 1) tint(255,180,180);
+    image(enemieImg, this.pos.x, this.pos.y);
+    noTint();
+    pop();
+  }
+  // moves enemie in current dir (when wandering) otherwise chase player
+  move(){
+    this.bounceCooldown--;
+    this.cooldownDirChange--;
+    if(this.cooldownDirChange <= 0) {
+      this.rotation = random(0,TWO_PI);
+      this.cooldownDirChange = int(random(50,200));
+    }
+    
+    var velocity = createVector(0,0);
+    
+    if(this.missleWarningCooldown > 0) velocity = this.missleDir;
+    else if(this.bounceCooldown > 0) velocity = this.bounce;
+    else if(this.wandering) velocity = createVector(cos(this.rotation - PI/2), sin(this.rotation - PI/2));
+    else {
+      velocity = player.pos.copy();
+      velocity.sub(this.pos);
+      velocity.setMag(this.chasingSpeed);
+    }
+    // adjust direction facing
+    let v1 = createVector(0,-1);
+    this.rotation = v1.angleBetween(velocity);
+    
+    this.pos.add(velocity);
+  }
+  // checks for collisions with rocks
+  checkRocks() {
+    if(collisionRocks(createVector(this.pos.x, this.pos.y), this.wanderingSpeed) != null) {
+     this.bounce = collisionRocks(createVector(this.pos.x, this.pos.y), this.wanderingSpeed);
+      this.bounceCooldown = 14;
+      // avoid rocks by turning around
+      this.rotation += PI;
+      this.cooldownDirChange = int(random(50,200));
+    }
+  }
+  // checks if Enemie left the Tilemap
+  checkBorders() {
+    if(this.pos.x < 0) this.pos.x = 0;
+    if(this.pos.x + 20 > 800) this.pos.x = 800 - 20;
+    if(this.pos.y < 0) this.pos.y = 0;
+    if(this.pos.y + 20 > 800) this.pos.y = 800 - 20;
+  }
+  // function to detect collision between a visionRange and a player
+  playerSighted() {
+    this.visionCooldown--;
+    if(this.visionCooldown <= 0) this.wandering = true;
+    
+    // temporaplayer.pos.y variables to set edges for testing
+    var testX = this.pos.x + 10;
+    var testY = this.pos.y + 10;
+
+    // which edge is closest?
+    if (this.pos.x + 10 < player.pos.x)         testX = player.pos.x;      // test left edge
+    else if (this.pos.x + 10 > player.pos.x+20) testX = player.pos.x+20;   // right edge
+    if (this.pos.y + 10 < player.pos.y)         testY = player.pos.y;      // top edge
+    else if (this.pos.y + 10 > player.pos.y+20) testY = player.pos.y+20;   // bottom edge
+
+    // get distance from closest edges
+    var distX = this.pos.x + 10-testX;
+    var distY = this.pos.y + 10-testY;
+
+    var distance = sqrt( (distX*distX) + (distY*distY) );
+
+    // if the distance is less than the this.visionRange, collision!
+    if (distance <= this.visionRange) {
+      // check if theres a rock in between
+      for(let i = 0; i < rocks.length; i++){
+        if(lineRect(this.pos.x,this.pos.y,player.pos.x, player.pos.y,rocks[i].pos.x,rocks[i].pos.y,20,20)) return; // collision with rock detected
+      }
+      
+      // no rock in between
+      this.wandering = false;
+      this.visionCooldown = 240;
+    }
+  }
+  // detects collision with player; --> game over
+  collisionPlayer() {
+    if(player.pos.x < this.pos.x + 20 && player.pos.x + 20 > this.pos.x && player.pos.y <  this.pos.y + 20 && player.pos.y + 20 > this.pos.y) {
+      phase = 2;
+    }
+  }
+  // collision with Missles
+  collisionMissles() {
+    for(let i = 0; i < missles.length; i++) {
+      if(missles[i].collision(this.pos.x,this.pos.y)) this.lives--;
+    }
+  }
+  // collision with missles trajectory
+  collisionMisslePath(){
+    this.missleWarningCooldown--;
+    
+    for(let i = 0; i < missles.length; i++) {
+      // vector of missle to check collision with enemie
+      var misslePath = createVector(cos(missles[i].rotation - PI/2), sin(missles[i].rotation - PI/2));
+      misslePath.setMag(1000);
+      misslePath.add(missles[i].pos);
+       stroke(255);
+      strokeWeight(2);
+      //line(missles[i].pos.x, missles[i].pos.y,misslePath.x,misslePath.y);
+      if(lineRect(missles[i].pos.x, missles[i].pos.y,misslePath.x,misslePath.y,this.pos.x,this.pos.y,20,20)) {
+        if(this.missleWarningCooldown <= 0) { // chose a direction only once    
+         this.missleWarningCooldown = 20;
+         // randomly 90 degrees left or right
+         var randomDir = int(random(0,2));
+         if(randomDir == 0) this.missleDir = p5.Vector.rotate(misslePath, HALF_PI);
+        else this.missleDir = p5.Vector.rotate(misslePath, -HALF_PI);
+         this.missleDir.setMag(2);
+        }
+      }else this.missleWarning = false;
+    }
+  }
+}
+
+
+class MISSLE {
+  constructor(posX, posY, rotation) {
+    this.pos = createVector(posX, posY);
+    this.rotation = rotation;
+    this.speed = 5;
+    this.width = 8;
+    this.height = 8;
+  }
+  update() {
+    this.move();
+    this.checkBorders();
+    this.show();
+  }
+  show(){
+    drawingContext.shadowBlur = 12;
+    drawingContext.shadowColor = color(134, 11, 222);
+    noFill();
+    stroke(209, 166, 224);
+    strokeWeight(2)
+    circle(this.pos.x,this.pos.y,5);
+    drawingContext.shadowBlur = 0;
+  }
+  move() {
+    var velocity = createVector(cos(this.rotation - PI/2), sin(this.rotation - PI/2));
+    velocity.setMag(this.speed);
+    this.pos.add(velocity);
+  }
+  collision(rx,ry) {
+    if(rx < this.pos.x + this.width && rx + 20 > this.pos.x && ry <  this.pos.y + this.height && ry + 20 > this.pos.y) {
+      this.pos.y = -1000;
+      return true;
+    }
+    return false;
+  }
+  // checks if Missle left the Tilemap
+  checkBorders() {
+    if(this.pos.x < 0) this.pos.y = -1000;
+    if(this.pos.x + this.width > 800) this.pos.y = -1000;
+    if(this.pos.y < 0) this.pos.y = -1000;
+    if(this.pos.y + this.height > 800) this.pos.y = -1000;
+  }
+}
+
+
+class PLAYER{
+  constructor(xPos, yPos) {
+    this.pos = createVector(xPos, yPos);
+    this.rotation = 0;
+    this.speed = 2;
+    this.leftKey = false;
+    this.upKey = false;
+    this.rightKey = false;
+    this.downKey = false;
+    this.bounce = null;
+    this.bounceCooldown = 0;
+  }
+  // updates Player every frame
+  update(){
+    this.move();
+    this.checkBorders();
+    this.checkRocks();
+    this.show()
+    
+    
+    collisionPrizes(createVector(this.pos.x, this.pos.y));
+    
+    // updates . (effects all objects)
+    offsetX = this.pos.x - 190;
+    offsetY = this.pos.y - 190;
+  }
+  
+  
+  // draws Player
+  show() {
+    drawingContext.shadowBlur = 20;
+    drawingContext.shadowColor = color(235, 228, 188,150);
+    push();
+    translate(this.pos.x + 10, this.pos.y + 10);
+    rotate(this.rotation);
+    translate(-this.pos.x - 10, -this.pos.y - 10);
+    image(playerImg, this.pos.x, this.pos.y);
+    pop();
+    
+  }
+  // moves Player
+  move() {
+    var velocity = createVector(0,0);
+    if(this.leftKey) this.rotation -= 0.065;
+    if(this.upKey) velocity = createVector(cos(this.rotation - PI/2), sin(this.rotation - PI/2));
+    if(this.rightKey) this.rotation += 0.065;
+    if(this.downKey) velocity = createVector(cos(this.rotation + PI/2), sin(this.rotation + PI/2));
+    velocity.setMag(this.speed); // pressing a and w won't be faster then just a or just w
+    
+    
+    this.bounceCooldown--;
+    if(this.bounceCooldown <= 0) this.pos.add(velocity);
+    else this.pos.add(this.bounce);
+  }
+  // checks for collisions with rocks
+  // shoots a new missle
+  shoot() {
+    var offset = createVector(cos(this.rotation - PI/2 + 0.5), sin(this.rotation - PI/2 + 0.5));
+    offset.setMag(10);
+    missles.push(new MISSLE(this.pos.x + 10 + offset.x, this.pos.y + 10 + offset.y, this.rotation));
+  }
+  
+  checkRocks() {
+    if(collisionRocks(createVector(this.pos.x, this.pos.y), this.speed) != null) {
+     this.bounce = collisionRocks(createVector(this.pos.x, this.pos.y), this.speed);
+      this.bounceCooldown = 14;
+    }
+  }
+  // checks if Player left the Tilemap
+  checkBorders() {
+    if(this.pos.x < 0) this.pos.x = 0;
+    if(this.pos.x + 20 > 800) this.pos.x = 800 - 20;
+    if(this.pos.y < 0) this.pos.y = 0;
+    if(this.pos.y + 20 > 800) this.pos.y = 800 - 20;
+  }
+}
+
+class PRIZE {
+  constructor(posX, posY) {
+    this.pos = createVector(posX, posY);
+    
+  }
+  // draws the prize
+  show(){
+    
+    drawingContext.shadowBlur = 12;
+    drawingContext.shadowColor = color(200);
+    stroke(200)
+    strokeWeight(1)
+    rect(this.pos.x,this.pos.y,20,20);
+    
+    drawingContext.shadowBlur = 12;
+    drawingContext.shadowColor = color(134, 11, 222);
+    noFill();
+    stroke(209, 166, 224);
+    strokeWeight(2)
+    circle(this.pos.x+7,this.pos.y+8,5);
+     stroke(209, 166, 224,170);
+    circle(this.pos.x+10,this.pos.y+10,5);
+     stroke(209, 166, 224,120);
+    circle(this.pos.x+13,this.pos.y+12,5);
+    drawingContext.shadowBlur = 0;
+  } 
+  // collision player - prize; checks for win condition; creates stars when collected
+  collision(rPos) { // rw & rh are always 20
+    if(rPos.x < this.pos.x + 20 && rPos.x + 20 > this.pos.x && rPos.y <  this.pos.y + 20 && rPos.y + 20 > this.pos.y) {
+      // create stars
+      for(let i = 0; i < int(random(6,9)); i++) stars.push(new STAR(this.pos.x + 10,this.pos.y + 10));
+      
+      this.pos.y = -100;
+    }
+  }
+}
+
+
+class ROCK {
+  constructor(posX, posY) {
+    this.pos = createVector(posX, posY);
+  }
+  update() {
+    this.collisionMissles();
+    this.show();
+  }
+  // draws the rock
+  show(){
+    drawingContext.shadowBlur = 6;
+    drawingContext.shadowColor = color(184, 220, 242);
+    image(rockImg,this.pos.x,this.pos.y);
+    strokeWeight(1);
+    stroke(184, 220, 242,150)
+    noFill()
+    drawingContext.shadowBlur = 6;
+    drawingContext.shadowColor = color(184, 220, 242);
+    rect(this.pos.x+5,this.pos.y+5,10,10)
+    drawingContext.shadowBlur = 0;
+  }
+  // collision with Missles
+  collisionMissles() {
+    for(let i = 0; i < missles.length; i++) {
+      if(missles[i].collision(this.pos.x,this.pos.y)) this.pos.y = -1000;
+    }
+  }
+  // pushes rock, when collision with enemie or player
+  collision(rPos, speed) { // rw & rh are always 20
+    if(rPos.x < this.pos.x + 20 && rPos.x + 20 > this.pos.x && rPos.y <  this.pos.y + 20 && rPos.y + 20 > this.pos.y) {
+      rPos.sub(this.pos);
+      rPos.setMag(speed/2);
+      return rPos;
+      
+    }
+    return null;
+  }  
+}
+
+
+class STAR {
+  constructor(posX, posY){
+    this.pos = createVector(posX, posY);
+    this.velocity = createVector(random(-2, 2), random(-2,-5));
+    this.acceleration = createVector(0, 0.4);
+    this.radius1 = int(random(2,4));
+    this.radius2 = int(random(5,10));
+    this.npoints = int(random(5,7));
+  }
+  // updates start every frane
+  update(){
+    this.move();
+    this.show();
+  }
+  // moves star (pulled down by gravity)
+  move(){
+    this.velocity.add(this.acceleration);
+    this.pos.add(this.velocity);
+  }
+  // draws stars every frame
+  show(){   
+    drawingContext.shadowBlur = 12;
+    drawingContext.shadowColor = color(134, 11, 222);
+    noFill();
+    stroke(209, 166, 224);
+    strokeWeight(2)
+    circle(this.pos.x,this.pos.y,5);
+    drawingContext.shadowBlur = 0;
+    
+  }
+}
+
+
+
+
+
+
+
+
